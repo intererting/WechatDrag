@@ -39,19 +39,14 @@ class PreviewActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_preview)
         supportPostponeEnterTransition()
-        dragCloseHelper.setDragCloseViews(containerView, previewViewPager, object : OnDragCloseHelperStartInfoCallback {
-            override fun onStartPoi(poiArray: FloatArray) {
-                val currentScaleView: PhotoView? =
-                    (previewViewPager[0] as? RecyclerView)?.get(0)?.findViewById(R.id.previewImage)as? PhotoView
-                currentScaleView?.apply {
-                    poiArray[0] = displayRect.bottom - displayRect.top
-                }
-            }
-        });
+        dragCloseHelper.setDragCloseViews(
+            containerView,
+            previewViewPager
+        )
         dragCloseHelper.setDragCloseListener(object : DragCloseHelper.DragCloseListener {
             override fun isDragEnable(): Boolean {
                 val currentScaleView: PhotoView? =
-                    (previewViewPager[0] as? RecyclerView)?.get(0)?.findViewById(R.id.previewImage)as? PhotoView
+                    (previewViewPager[0] as? RecyclerView)?.get(0)?.findViewById(R.id.previewImage) as? PhotoView
                 currentScaleView?.apply {
                     return !isFinishing && currentScrollState == SCROLL_STATE_IDLE && (scale == 1F || displayRect.top >= 0)
                 }
@@ -110,7 +105,13 @@ class PagerAdapter : RecyclerView.Adapter<PagerAdapter.PagerHolder>() {
     private val imags = intArrayOf(R.drawable.test_a, R.drawable.test_b)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PagerHolder {
-        return PagerHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_preview, parent, false))
+        return PagerHolder(
+            LayoutInflater.from(parent.context).inflate(
+                R.layout.item_preview,
+                parent,
+                false
+            )
+        )
     }
 
     override fun getItemCount(): Int {
@@ -121,5 +122,6 @@ class PagerAdapter : RecyclerView.Adapter<PagerAdapter.PagerHolder>() {
         holder.itemView.previewImage.setImageResource(imags[position])
     }
 
-    class PagerHolder(override val containerView: View) : RecyclerView.ViewHolder(containerView), LayoutContainer
+    class PagerHolder(override val containerView: View) : RecyclerView.ViewHolder(containerView),
+        LayoutContainer
 }

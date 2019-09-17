@@ -7,7 +7,6 @@ import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
-import androidx.core.view.ViewCompat
 import kotlin.math.abs
 
 class DragCloseHelper(private val mContext: Context) {
@@ -18,7 +17,7 @@ class DragCloseHelper(private val mContext: Context) {
         //滑动边界距离
         private const val MAX_EXIT_Y = 500
         //最小的缩放尺寸
-        private const val MIN_SCALE = 0.4f
+        private const val MIN_SCALE = 0.5f
     }
 
     //加速度检测
@@ -44,9 +43,6 @@ class DragCloseHelper(private val mContext: Context) {
     //当前位移距离
     private var mCurrentTranslationY: Float = 0F
     private var mCurrentTranslationX: Float = 0F
-    //上次位移距离
-    private var mLastTranslationY: Float = 0F
-    private var mLastTranslationX: Float = 0F
     //正在恢复原位中
     private var isResetingAnimate = false
     //控制透明度
@@ -55,10 +51,6 @@ class DragCloseHelper(private val mContext: Context) {
     private lateinit var childV: View
     //回调
     private lateinit var dragCloseListener: DragCloseListener
-    //拖拽开始信息回调
-    private lateinit var startInfoCallback: OnDragCloseHelperStartInfoCallback
-    //开始拖拽信息
-    private val startDragInfo: FloatArray = floatArrayOf(0F)
 
     fun setDragCloseListener(dragCloseListener: DragCloseListener) {
         this.dragCloseListener = dragCloseListener
@@ -67,10 +59,12 @@ class DragCloseHelper(private val mContext: Context) {
     /**
      * 设置拖拽关闭的view和基本信息
      */
-    fun setDragCloseViews(parentV: View, childV: View, startInfoCallback: OnDragCloseHelperStartInfoCallback) {
+    fun setDragCloseViews(
+        parentV: View,
+        childV: View
+    ) {
         this.parentV = parentV
         this.childV = childV
-        this.startInfoCallback = startInfoCallback
     }
 
     /**
@@ -127,11 +121,10 @@ class DragCloseHelper(private val mContext: Context) {
                         if (!isSwipingToClose) {
                             //准备开始
                             isSwipingToClose = true
-                            startInfoCallback.onStartPoi(startDragInfo)
                             dragCloseListener.dragStart()
                         }
-                        mCurrentTranslationY = currentRawY - mLastRawY + mLastTranslationY
-                        mCurrentTranslationX = currentRawX - mLastRawX + mLastTranslationX
+                        mCurrentTranslationY = currentRawY - mLastRawY
+                        mCurrentTranslationX = currentRawX - mLastRawX
                         var percent = 1 - abs(mCurrentTranslationY / (maxExitY + childV.height))
                         if (percent > 1) {
                             percent = 1f
@@ -149,7 +142,7 @@ class DragCloseHelper(private val mContext: Context) {
                         childV.scaleX = percent
                         childV.scaleY = percent
                         //平移
-                        childV.translationY = mCurrentTranslationY - startDragInfo[0] / 2 * (1 - percent)
+                        childV.translationY = mCurrentTranslationY
                         childV.translationX = mCurrentTranslationX
                         return true
                     }
@@ -202,8 +195,6 @@ class DragCloseHelper(private val mContext: Context) {
         mLastX = event.x
         mLastRawY = event.rawY
         mLastRawX = event.rawX
-        mLastTranslationY = 0f
-        mLastTranslationX = 0f
     }
 
     /**
@@ -234,9 +225,7 @@ class DragCloseHelper(private val mContext: Context) {
             if (isResetingAnimate) {
                 mCurrentTranslationY = valueAnimator.animatedValue as Float
                 mCurrentTranslationX = ratio * mCurrentTranslationY
-                mLastTranslationY = mCurrentTranslationY
-                mLastTranslationX = mCurrentTranslationX
-                updateChildView(mLastTranslationX, mCurrentTranslationY)
+                updateChildView(mCurrentTranslationX, mCurrentTranslationY)
             }
         }
         animatorY.addListener(object : Animator.AnimatorListener {
@@ -292,8 +281,3 @@ class DragCloseHelper(private val mContext: Context) {
         fun dragClose(isShareElementMode: Boolean)
     }
 }
-
-interface OnDragCloseHelperStartInfoCallback {
-    fun onStartPoi(poiArray: FloatArray)
-}
-
